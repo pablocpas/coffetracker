@@ -10,6 +10,9 @@ const isLoading = ref(true)
 const errorMsg = ref('')
 const showConfetti = ref(false)
 const coffeeCount = ref(0)
+const showHistory = ref(false) // State for history popup visibility
+const historyData = ref([])   // State to store history
+const isLoadingHistory = ref(false) // State for history loading
 
 // --- Nombres (¡¡IMPORTANTE!! Edita estos valores) ---
 // Deben coincidir exactamente con los del backend (app.py)
@@ -66,6 +69,34 @@ const pay = async (payerName) => {
     errorMsg.value = `Error al registrar el pago: ${error.response?.data?.error || 'Error desconocido'}`
   } finally {
     isLoading.value = false
+  }
+}
+
+// Función para obtener el historial
+const fetchHistory = async () => {
+  if (showHistory.value) { // Si ya está abierto, ciérralo
+    showHistory.value = false;
+    return;
+  }
+  isLoadingHistory.value = true;
+  errorMsg.value = ''; // Limpiar errores previos
+  try {
+    const response = await axios.get(`${apiUrl}/history?t=${Date.now()}`);
+    historyData.value = response.data.map(item => ({
+      ...item,
+      // Formatear fecha y hora para legibilidad
+      formattedTime: new Date(item.time).toLocaleString('es-ES', { 
+        dateStyle: 'medium', 
+        timeStyle: 'short' 
+      }) 
+    }));
+    showHistory.value = true; // Mostrar el popup
+  } catch (error) {
+    console.error("Error al obtener el historial:", error.response?.data || error.message);
+    errorMsg.value = `Error al cargar el historial: ${error.response?.data?.error || 'Error desconocido'}`;
+    showHistory.value = false; // Asegurarse de que esté cerrado si hay error
+  } finally {
+    isLoadingHistory.value = false;
   }
 }
 
@@ -235,10 +266,32 @@ watch(showConfetti, (newVal) => {
     
     <footer class="footer">
       <p>CoffeeTracker v2.0 - Mantén la cuenta de quién invita al café</p>
-      <button @click="resetCounter" :disabled="isLoading" class="button button-danger button-small">
+      <button @click="fetchHistory" :disabled="isLoading || isLoadingHistory" class="button button-info button-small">
+        {{ showHistory ? 'Cerrar Historial' : (isLoadingHistory ? 'Cargando...' : 'Ver Historial') }}
+      </button>
+      <button @click="resetCounter" :disabled="isLoading || isLoadingHistory" class="button button-danger button-small">
         Resetear Historial
       </button>
     </footer>
+
+    <!-- History Popup/Modal -->
+    <div v-if="showHistory" class="modal-overlay" @click.self="showHistory = false">
+      <div class="modal-content">
+        <h2>Historial de Cafés</h2>
+        <div v-if="isLoadingHistory" class="loading-history">Cargando...</div>
+        <div v-else-if="historyData.length === 0" class="no-history">
+          No hay historial de pagos todavía.
+        </div>
+        <ul v-else class="history-list">
+          <li v-for="(item, index) in historyData" :key="index">
+            <strong>{{ item.payer }}</strong> pagó el {{ item.formattedTime }}
+          </li>
+        </ul>
+        <button @click="showHistory = false" class="button button-secondary button-small close-button">
+          Cerrar
+        </button>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -464,6 +517,83 @@ h1 {
   font-size: 0.9rem;
   min-width: auto; /* Ancho automático */
 }
+
+.button-info {
+  background-color: var(--color-accent-light); /* Un color diferente para historial */
+  color: var(--color-text);
+}
+
+.button-info:hover {
+  background-color: #a8dadc; /* Un color más claro al pasar el ratón */
+}
+
+/* Modal Styles */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.6);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 100; /* Asegurar que esté por encima de todo */
+}
+
+.modal-content {
+  background-color: var(--color-background);
+  padding: 2rem;
+  border-radius: var(--border-radius-lg);
+  box-shadow: var(--shadow-xl);
+  width: 90%;
+  max-width: 500px;
+  max-height: 80vh;
+  overflow-y: auto;
+  text-align: left;
+  position: relative; /* Para el botón de cerrar si se quisiera absoluto */
+}
+
+.modal-content h2 {
+  text-align: center;
+  color: var(--color-primary);
+  margin-bottom: 1.5rem;
+}
+
+.loading-history, .no-history {
+  text-align: center;
+  padding: 1rem;
+  color: var(--color-text-light);
+}
+
+.history-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  max-height: 60vh; /* Limitar altura si hay muchos items */
+  overflow-y: auto; /* Scroll si es necesario */
+}
+
+.history-list li {
+  padding: 0.8rem 0.5rem;
+  border-bottom: 1px solid var(--color-border);
+  color: var(--color-text);
+}
+
+.history-list li:last-child {
+  border-bottom: none;
+}
+
+.history-list strong {
+  color: var(--color-primary);
+  font-weight: 600;
+}
+
+.close-button {
+  display: block; /* Hacer que ocupe su propia línea */
+  margin: 1.5rem auto 0; /* Centrar y añadir espacio arriba */
+}
+
 
 /* Decoración de granos de café */
 .coffee-decoration {
