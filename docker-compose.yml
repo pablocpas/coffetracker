@@ -1,0 +1,13 @@
+version: '3.8'
+
+services:
+  coffetracker:
+    build: .
+    container_name: coffetracker_app
+    ports:
+      - "5000:5000"
+    volumes:
+      # Mount the instance directory to persist the SQLite database
+      # Creates the host directory if it doesn't exist
+      - ./backend/instance:/app/backend/instance
+    restart: unless-stopped

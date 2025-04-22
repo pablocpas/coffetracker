@@ -17,7 +17,8 @@ const friend1 = "CAÑO"  // <-- CAMBIA ESTO
 const friend2 = "BARRIO" // <-- CAMBIA ESTO
 
 // --- URL de la API (ajusta si es necesario) ---
-const apiUrl = 'http://localhost:5000/api' // O la IP/dominio de tu backend
+// Usamos una ruta relativa para que funcione dentro del contenedor Docker
+const apiUrl = '/api' 
 
 // --- Lógica ---
 // Función para obtener el último pagador al cargar

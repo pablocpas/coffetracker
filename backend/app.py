@@ -1,7 +1,7 @@
 
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
-from database import db, Payment
+from .database import db, Payment # Use relative import
 import os
 from datetime import datetime # Asegúrate de importar datetime si no lo hiciste en database.py
 
@@ -26,7 +26,7 @@ with app.app_context():
 FRIEND1_NAME = "CAÑO"  # <-- CAMBIA ESTO
 FRIEND2_NAME = "BARRIO" # <-- CAMBIA ESTO
 
-# --- Rutas de la API ---
+# --- Rutas de la API (prefijo /api) ---
 @app.route('/api/last_payer', methods=['GET'])
 def get_last_payer():
     """Devuelve el nombre de la última persona que pagó."""
@@ -61,6 +61,19 @@ def get_history():
     payments = Payment.query.order_by(Payment.timestamp.desc()).all()
     history = [{"payer": p.payer_name, "time": p.timestamp.isoformat()} for p in payments]
     return jsonify(history)
+
+# --- Rutas para servir el frontend estático ---
+# Sirve el archivo principal index.html
+@app.route('/', defaults={'path': ''})
+@app.route('/<path:path>')
+def serve_frontend(path):
+    dist_path = os.path.join(os.path.dirname(__file__), 'dist')
+    if path != "" and os.path.exists(os.path.join(dist_path, path)):
+        # Sirve archivos específicos (JS, CSS, imágenes, etc.)
+        return send_from_directory(dist_path, path)
+    else:
+        # Sirve index.html para cualquier otra ruta (manejo de SPA)
+        return send_from_directory(dist_path, 'index.html')
 
 # --- Ejecución ---
 if __name__ == '__main__':
