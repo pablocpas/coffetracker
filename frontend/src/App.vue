@@ -29,11 +29,9 @@ const fetchLastPayer = async () => {
     // Añadimos un timestamp para evitar caché en algunas configuraciones
     const response = await axios.get(`${apiUrl}/last_payer?t=${Date.now()}`)
     lastPayer.value = response.data.last_payer
+    coffeeCount.value = response.data.count // Actualizar contador desde la API
     
-    // Incrementar contador de café para animación
-    coffeeCount.value += 1
-    
-    console.log("Último pagador recibido:", lastPayer.value)
+    console.log("Último pagador recibido:", lastPayer.value, "Contador:", coffeeCount.value)
   } catch (error) {
     console.error("Error al obtener el último pagador:", error.response?.data || error.message)
     errorMsg.value = `Error al conectar con el servidor (${apiUrl}). ¿Está el backend funcionando?`
@@ -57,16 +55,15 @@ const pay = async (payerName) => {
         setTimeout(() => {
           showConfetti.value = false
         }, 3000)
-        
-        // Incrementar contador de café
-        coffeeCount.value += 1
+        coffeeCount.value = response.data.count // Actualizar contador desde la API
     } else {
         // Esto no debería ocurrir si el backend devuelve un error HTTP, pero por si acaso
         errorMsg.value = response.data.error || 'Error desconocido al registrar el pago.'
     }
   } catch (error) {
     console.error("Error al registrar el pago:", error.response?.data || error.message)
-    errorMsg.value = `Error al registrar el pago: ${error.response?.data?.error || error.message}`
+    // Ya no esperamos el error 409 específico, manejamos errores generales
+    errorMsg.value = `Error al registrar el pago: ${error.response?.data?.error || 'Error desconocido'}`
   } finally {
     isLoading.value = false
   }
@@ -76,6 +73,31 @@ const pay = async (payerName) => {
 onMounted(() => {
   fetchLastPayer() // Llama a la API cuando el componente se monta
 })
+
+// Función para resetear el contador
+const resetCounter = async () => {
+  if (!confirm('¿Estás seguro de que quieres borrar TODO el historial de cafés? Esta acción no se puede deshacer.')) {
+    return;
+  }
+  isLoading.value = true
+  errorMsg.value = ''
+  try {
+    const response = await axios.delete(`${apiUrl}/reset`)
+    if (response.data.success) {
+      lastPayer.value = response.data.last_payer // Debería ser null
+      coffeeCount.value = response.data.count   // Debería ser 0
+      console.log("Historial reseteado.")
+      // Opcional: mostrar mensaje de éxito temporal
+    } else {
+      errorMsg.value = response.data.error || 'Error desconocido al resetear.'
+    }
+  } catch (error) {
+    console.error("Error al resetear el historial:", error.response?.data || error.message)
+    errorMsg.value = `Error al resetear: ${error.response?.data?.error || error.message}`
+  } finally {
+    isLoading.value = false
+  }
+}
 
 // --- Propiedades Computadas (para el balancín) ---
 const seesawState = computed(() => {
@@ -182,18 +204,18 @@ watch(showConfetti, (newVal) => {
       <Seesaw :state="seesawState" :friend1Name="friend1" :friend2Name="friend2" />
 
       <div class="buttons">
-        <button 
-          @click="pay(friend1)" 
-          :disabled="isLoading"
+        <button
+          @click="pay(friend1)"
+          :disabled="isLoading || lastPayer === friend1" 
           class="button button-primary"
         >
           <span class="button-icon">☕</span>
           <span>Pagó {{ friend1 }}</span>
         </button>
         
-        <button 
-          @click="pay(friend2)" 
-          :disabled="isLoading"
+        <button
+          @click="pay(friend2)"
+          :disabled="isLoading || lastPayer === friend2" 
           class="button button-secondary"
         >
           <span class="button-icon">☕</span>
@@ -213,6 +235,9 @@ watch(showConfetti, (newVal) => {
     
     <footer class="footer">
       <p>CoffeeTracker v2.0 - Mantén la cuenta de quién invita al café</p>
+      <button @click="resetCounter" :disabled="isLoading" class="button button-danger button-small">
+        Resetear Historial
+      </button>
     </footer>
   </div>
 </template>
@@ -420,6 +445,24 @@ h1 {
   text-align: center;
   padding-top: 1rem;
   border-top: 1px solid rgba(0, 0, 0, 0.05);
+  display: flex; /* Para alinear el botón */
+  flex-direction: column; /* Apilar texto y botón */
+  align-items: center; /* Centrar horizontalmente */
+  gap: 0.5rem; /* Espacio entre texto y botón */
+}
+
+.button-danger {
+  background-color: var(--color-danger);
+}
+
+.button-danger:hover {
+  background-color: #a02c37; /* Un rojo más oscuro */
+}
+
+.button-small {
+  padding: 0.5rem 1rem;
+  font-size: 0.9rem;
+  min-width: auto; /* Ancho automático */
 }
 
 /* Decoración de granos de café */
