@@ -1,5 +1,28 @@
 
-/* Estilos base simples */
+/* Estilos base modernos */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
+
+:root {
+  --color-primary: #6a3e37;
+  --color-secondary: #d4a373;
+  --color-accent: #e76f51;
+  --color-background: #faf3e0;
+  --color-text: #2b2b2b;
+  --color-text-light: #6c757d;
+  --color-success: #2a9d8f;
+  --color-warning: #e9c46a;
+  --color-danger: #e63946;
+  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 8px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 8px 16px rgba(0, 0, 0, 0.1);
+  --border-radius-sm: 4px;
+  --border-radius-md: 8px;
+  --border-radius-lg: 16px;
+  --transition-fast: 0.2s ease;
+  --transition-normal: 0.3s ease;
+  --transition-slow: 0.5s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+}
+
 *,
 *::before,
 *::after {
@@ -13,14 +36,18 @@
 body {
   min-height: 100vh;
   line-height: 1.6;
-  font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu,
+  font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu,
     Cantarell, 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
   font-size: 16px;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background-color: #f0f0f0; /* Un fondo suave */
-  color: #333;
+  background-color: var(--color-background);
+  color: var(--color-text);
+  transition: background-color var(--transition-normal);
+  background-image: 
+    radial-gradient(circle at 25% 25%, rgba(106, 62, 55, 0.03) 0%, transparent 50%),
+    radial-gradient(circle at 75% 75%, rgba(212, 163, 115, 0.03) 0%, transparent 50%);
 }
 
 #app {
@@ -30,15 +57,47 @@ body {
   font-weight: normal;
 }
 
-a,
-.green {
+a {
   text-decoration: none;
-  color: hsla(160, 100%, 37%, 1);
-  transition: 0.4s;
+  color: var(--color-accent);
+  transition: all var(--transition-fast);
 }
 
-@media (hover: hover) {
-  a:hover {
-    background-color: hsla(160, 100%, 37%, 0.2);
-  }
+a:hover {
+  color: var(--color-primary);
+}
+
+button {
+  cursor: pointer;
+  font-family: 'Poppins', sans-serif;
+  font-weight: 500;
+}
+
+/* Animaciones globales */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { transform: translateY(20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+
+.animate-fadeIn {
+  animation: fadeIn var(--transition-normal);
+}
+
+.animate-slideUp {
+  animation: slideUp var(--transition-normal);
+}
+
+.animate-pulse {
+  animation: pulse 2s infinite;
 }
