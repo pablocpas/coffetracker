@@ -187,7 +187,7 @@ watch(showConfetti, (newVal) => {
           class="button button-primary"
         >
           <span class="button-icon">☕</span>
-          <span>Pagué Yo ({{ friend1 }})</span>
+          <span>Pagó {{ friend1 }}</span>
         </button>
         
         <button 
